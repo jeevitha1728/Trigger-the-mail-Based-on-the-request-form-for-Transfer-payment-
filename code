@@ -1,0 +1,130 @@
+/**
+ * Manually (via button) or automatically (via time-driven trigger) 
+ * sends approval emails for all rows marked 'Approve'.
+ */
+/**
+ * Automatically sets the 'Approval Status' column (K) to 'Pending' 
+ * when a new request form is submitted to the linked spreadsheet.
+ */
+function onFormSubmit(e) {
+  // CRITICAL: This name MUST EXACTLY match your sheet tab: "Request Forms"
+  const SHEET_NAME = 'Request Forms'; 
+  const STATUS_COLUMN_INDEX = 11; // Column K is the 11th column
+  
+  // This line logs the sheet name it's attempting to work with
+  Logger.log('Processing submission on sheet: ' + e.range.getSheet().getName()); 
+
+  const sheet = e.range.getSheet();
+  
+  // Exit if the submission is not on the correct sheet
+  if (sheet.getName() !== SHEET_NAME) {
+    Logger.log('Incorrect sheet name. Script exiting.');
+    return;
+  }
+  
+  // Get the row number of the new submission
+  const row = e.range.getRow();
+  
+  // Set the value in Column K
+  sheet.getRange(row, STATUS_COLUMN_INDEX).setValue("Pending");
+  Logger.log('Successfully set row ' + row + ' to Pending.');
+}
+
+function sendApprovalEmails() {
+  
+  // --- CONSTANTS: CONFIGURE THESE FOR YOUR SHEET ---
+  const SHEET_NAME = 'Request Forms';           // CONFIRMED Sheet Name (plural)
+  const STATUS_COLUMN_INDEX = 11;             // Column K
+  const EMAIL_COLUMN_INDEX = 10;              // Column J
+  const REQUEST_TYPE_COLUMN_INDEX = 9;        // Column I
+  const ORDER_NUMBER_COLUMN_INDEX = 3;        // Column C (Order number)
+
+  const FORM_IDS = {
+    // MUST match the data in Column I (no numbers/periods)
+    'Refund': '1moBw50URnJ1y7nc_uP7lonN6Wpdi-JThgUzpDUJ8X50', 
+    'Ex-change': '1sn1GEj64VRIiTE0msKYPSiLgxEYNCFIjQuaJzZEgn5Y' 
+  };
+  // --- END OF CONSTANTS ---
+  
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  
+  // Safety check (prevents the "Cannot read properties of null" error)
+  if (!sheet) {
+    Logger.log(`Error: Sheet named "${SHEET_NAME}" not found.`);
+    return;
+  }
+  
+  const dataRange = sheet.getDataRange();
+  const values = dataRange.getValues();
+  
+  // Start from row 2 to skip headers
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    const approvalStatus = row[STATUS_COLUMN_INDEX - 1]; // Column K value
+    
+    // 1. Check if the status is 'Approve'
+    if (approvalStatus === 'Approve') {
+      const statusCell = sheet.getRange(i + 1, STATUS_COLUMN_INDEX);
+      const cellNote = statusCell.getNote();
+      const rowNumber = i + 1;
+      
+      // 2. Prevent resending email if a success note is already present
+      if (cellNote.includes('sent successfully')) {
+        continue; // Skip this row, email was already sent
+      }
+      
+      // 3. Retrieve all necessary data points
+      const recipientEmail = row[EMAIL_COLUMN_INDEX - 1];          // Column J
+      const requestType = row[REQUEST_TYPE_COLUMN_INDEX - 1];      // Column I
+      const orderNumber = row[ORDER_NUMBER_COLUMN_INDEX - 1];      // Column C
+      const formFileId = FORM_IDS[requestType];
+      
+      // 4. Validate File ID
+      if (!formFileId) {
+        Logger.log(`Error: Missing File ID for row ${rowNumber}: ${requestType}`);
+        statusCell.setNote(`Manual run failed: Missing File ID for ${requestType}`);
+        continue;
+      }
+      
+      try {
+        const simpleRequestName = requestType; 
+        const subject = `Action Required: Your ${simpleRequestName} Request Has Been Approved`;
+        
+        // Construct the public URL for the Google Form
+        const formUrl = 'https://docs.google.com/forms/d/' + formFileId + '/viewform';
+        
+        // 5. Compose the email with the Order Number included
+        const htmlBody = `
+          <p>Dear Customer,</p>
+          
+          <p>We are pleased to inform you that your request for a **${simpleRequestName}** has been **APPROVED** for order number **${orderNumber}**.</p>
+          
+          <p>Please click the link below to access and complete the necessary ${simpleRequestName} form to finalize your request:</p>
+          
+          <p style="font-size: 16px; margin-top: 20px;">
+              <a href="${formUrl}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;">
+                  Complete the Form Here
+              </a>
+          </p>
+          
+          <p>If you have any questions, please reply to this email.</p>
+          
+          <p>Sincerely,<br>
+          The Team</p>
+        `;
+        
+        // 6. Send the email (without attachments)
+        GmailApp.sendEmail(recipientEmail, subject, "", {
+          htmlBody: htmlBody
+        });
+        
+        // 7. Mark as sent
+        statusCell.setNote(`Manual run sent successfully on ${new Date().toLocaleTimeString()}`);
+        
+      } catch (error) {
+        Logger.log(`Email failed for row ${rowNumber}: ${error.toString()}`);
+        statusCell.setNote(`Email FAILED: ${error.toString().substring(0, 50)}...`);
+      }
+    }
+  }
+}
