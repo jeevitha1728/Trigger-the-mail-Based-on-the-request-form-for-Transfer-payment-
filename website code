@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Fence</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* ensures footer pushes to bottom */
+      }
+      .site-header {
+        background: #4e93c2;
+        color: #fff;
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .site-header img {
+        height: 50px;
+        margin-right: 15px;
+      }
+      .header-content {
+        display: flex;
+        align-items: center;
+      }
+      .site-header h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .site-header nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        gap: 15px;
+      }
+      .site-header nav a {
+        color: #fff;
+        text-decoration: none;
+      }
+            .main-container {
+        display: flex;
+        flex: 2;
+        padding: 20px;
+      }
+      .main-content {
+        flex: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* ✅ center horizontally */
+        justify-content: center; /* ✅ center vertically if space */
+        text-align: center;
+      }
+      .main-content h2 {
+        margin-bottom: 20px;
+        font-size: 26px;
+        color: #333;
+      }
+      .main-content .btn-container a {
+        display: inline-block;
+        background: #0073e6;
+        color: #fff;
+        padding: 12px 20px;
+        margin-right: 15px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+        transition: background 0.3s;
+      }
+      .main-content .btn-container a:hover {
+        background: #005bb5;
+      }
+      .sidebar {
+        flex: 1;
+        background: #f4f4f4;
+        padding: 15px;
+      }
+      .site-footer {
+        text-align: center;
+        background: #333;
+        color: #fff;
+        padding: 10px;
+        margin-top: auto; /* keeps footer at bottom */
+      }
+    </style>
+  </head>
+  <body>
+
+    <header class="site-header">
+      <div class="header-content">
+        <!-- ✅ Logo -->
+        <img src="   fill the logo image URL HERE      " alt="Logo">
+        <h1>Just Fence</h1>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <article class="main-content">
+          <!-- ✅ Centered heading -->
+        <h2>Transfer Forms</h2>
+        <!-- ✅ Buttons for forms -->
+        <div class="btn-container">
+          <a href="https://forms.gle/vwzXYEWiMEJL5z8x7" target="_blank">Request Form</a>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>#Just check the website</p>
+    </footer>
+
+  </body>
+</html>
